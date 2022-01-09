@@ -2,7 +2,7 @@ import pandas as pd
 import pymongo
 import re
 from pathlib import Path
-
+import argparse
 
 def replace_start_str_to_end_str(start_str, end_str, given_str):
     start_str_idx = given_str.find(start_str)
@@ -84,13 +84,21 @@ def push_data_to_mongo_and_create_index(df, KEY_COLS, CONTAINER_NAME, mydb):
 if __name__=="__main__":
     DB_URL = "mongodb://localhost:27017/"
     DB_NAME = "PIAD"
-    CONTAINER_NAME = "piad_model_1"
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--model_name',default='piad_model_1', type=str)
+    parser.add_argument('--relational_database_name', default='https://gist.github.com/kevin336/acbb2271e66c10a5b73aacf82ca82784', type=str)
+    parser.add_argument('--key_cols', default='EMPLOYEE_ID,FIRST_NAME', type=str)
+    parser.add_argument('--value_cols', default='LAST_NAME,EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID', type=str)
+    args = vars(parser.parse_args())
+    CONTAINER_NAME = args['model_name']#"piad_model_1"
 
-    df = pd.read_html('https://gist.github.com/kevin336/acbb2271e66c10a5b73aacf82ca82784')[0].iloc[:,1:]
-
-    KEY_COLS = 'EMPLOYEE_ID,FIRST_NAME'
-    VALUE_COLS = 'LAST_NAME,EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID'
-
+    RELATIONAL_DATABASE_NAME = args['relational_database_name']#'https://gist.github.com/kevin336/acbb2271e66c10a5b73aacf82ca82784'
+    KEY_COLS = args['key_cols']#'EMPLOYEE_ID,FIRST_NAME'
+    VALUE_COLS = args['value_cols']#'LAST_NAME,EMAIL,PHONE_NUMBER,HIRE_DATE,JOB_ID,SALARY,COMMISSION_PCT,MANAGER_ID,DEPARTMENT_ID'
+    
+    df = pd.read_html(RELATIONAL_DATABASE_NAME)[0].iloc[:,1:]
+    df = df.loc[:, KEY_COLS.split(',') + VALUE_COLS.split(',')].copy()
 
     client, mydb = create_mongo_client(DB_URL, DB_NAME)
 
